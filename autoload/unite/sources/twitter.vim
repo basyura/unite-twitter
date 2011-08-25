@@ -9,7 +9,14 @@ function! s:source.gather_candidates(args, context)
     let method = 'home_timeline'
   endif
   " I want to change from a:args to a:000
-  let result = rubytter#request(method , a:args)
+  try
+    let result = rubytter#request(method , a:args)
+  catch 
+    return map(split(v:exception , "\n") , '{
+          \ "word"   : v:val ,
+          \ "source" : "common" ,
+          \ }')
+  endtry
   return map(result , 
         \ '{
         \ "word": v:val.user.screen_name . " : " . v:val.text,
@@ -28,6 +35,7 @@ function! unite#sources#twitter#define()
   call add(sources , s:source)
   return sources
 endfunction
+
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
