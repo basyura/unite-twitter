@@ -1,10 +1,15 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-let s:unite_source = {'name': 'twitter'}
+let s:source = {'name': 'twitter'}
 
-function! s:unite_source.gather_candidates(args, context)
-  let result = rubytter#request('list_statuses' , 'basyura' , 'all')
+function! s:source.gather_candidates(args, context)
+  let method = substitute(self.name , "twitter/" , "" , "")
+  if method == 'twitter'
+    let method = 'home_timeline'
+  endif
+  " I want to change from a:args to a:000
+  let result = rubytter#request(method)
   return map(result , 
         \ '{
         \ "word": v:val.user.screen_name . " : " . v:val.text,
@@ -13,7 +18,15 @@ function! s:unite_source.gather_candidates(args, context)
 endfunction
 
 function! unite#sources#twitter#define()
-  return s:unite_source
+  let sources = map([
+        \ {'name': 'list_statuses'},
+        \ {'name': 'mentions'},
+        \ ],
+        \ 'extend(copy(s:source),
+        \  extend(v:val, {"name": "twitter/" . v:val.name,
+        \  "description": "candidates from twitter of " . v:val.name}))')
+  call add(sources , s:source)
+  return sources
 endfunction
 
 let &cpo = s:save_cpo
