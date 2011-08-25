@@ -9,7 +9,7 @@ function! s:source.gather_candidates(args, context)
     let method = 'home_timeline'
   endif
   " I want to change from a:args to a:000
-  let result = rubytter#request(method)
+  let result = rubytter#request(method , a:args)
   return map(result , 
         \ '{
         \ "word": v:val.user.screen_name . " : " . v:val.text,
