@@ -19,7 +19,7 @@ function! s:source.gather_candidates(args, context)
   endtry
   return map(result , 
         \ '{
-        \ "word": v:val.user.screen_name . " : " . v:val.text,
+        \ "word": s:ljust(v:val.user.screen_name , 15) . " : " . v:val.text,
         \ "source": "twitter",
         \ }')
 endfunction
@@ -36,6 +36,17 @@ function! unite#sources#twitter#define()
   return sources
 endfunction
 
+function! s:ljust(str, size, ...)
+  let str = a:str
+  let c   = a:0 > 0 ? a:000[0] : ' '
+  while 1
+    if strwidth(str) >= a:size
+      return str
+    endif
+    let str .= c
+  endwhile
+  return str
+endfunction
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
