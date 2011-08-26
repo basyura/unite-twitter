@@ -33,6 +33,29 @@ function! s:source.action_table['*'].preview.func(candidate)
     execute 'wincmd p'
 endfunction
 
+function! s:initialize_yesno_actions()
+  let list = [
+        \ {'m' : 'favorite'        , 'desc' : 'favorite tweet' , 'msg' : 'favorite this tweet ?'} ,
+        \ {'m' : 'remove_favorite' , 'desc' : 'remove tweet'   , 'msg' : 'remove this tweet ?'  } ,
+        \ {'m' : 'retweet'         , 'desc' : 'retweet'        , 'msg' : 'retweet this tweet ?' } ,
+        \ {'m' : 'remove'          , 'desc' : 'remove tweet'   , 'msg' : 'remvoe this tweet ?'  } ,
+        \ ]
+  for v in list
+    let s:source.action_table['*'][v.m] = {
+          \ 'description' : v.desc ,
+          \ 'is_quit'     : 0 ,
+          \ }
+    let s:source.action_table['*'][v.m] = copy(v)
+    function s:source.action_table['*'][v.m].func(candidate) dict
+      if !unite#util#input_yesno(self.msg)
+        return
+      endif
+      call rubytter#request(self.m , a:candidate.source__status_id)
+    endfunction
+  endfor
+endfunction
+
+call s:initialize_yesno_actions()
 
 let s:source.action_table['*'].reply = {
       \ 'description' : 'reply tweet',
@@ -61,57 +84,6 @@ function! s:source.action_table['*'].reply.func(candidate)
     startinsert!
 endfunction
 
-let s:source.action_table['*'].retweet = {
-      \ 'description' : 'retweet',
-      \ 'is_quit' : 0,
-      \ }
-
-function! s:source.action_table['*'].retweet.func(candidate)
-    if !unite#util#input_yesno('retweet this tweet ?')
-      return
-    endif
-    call rubytter#request('retweet' , a:candidate.source__status_id)
-endfunction
-
-let s:source.action_table['*'].remove = {
-      \ 'description' : 'remove tweet',
-      \ 'is_quit' : 0,
-      \ }
-
-function! s:source.action_table['*'].remove.func(candidate)
-    if !unite#util#input_yesno('remove this tweet ?')
-      return
-    endif
-    echoerr a:candidate.source__status_id
-    call rubytter#request('remove_status' , a:candidate.source__status_id)
-endfunction
-
-let s:source.action_table['*'].favorite = {
-      \ 'description' : 'favorit tweet',
-      \ 'is_quit' : 0,
-      \ }
-
-function! s:source.action_table['*'].favorite.func(candidate)
-    if !unite#util#input_yesno('favorite this tweet ?')
-      return
-    endif
-    echoerr a:candidate.source__status_id
-    call rubytter#request('favorite' , a:candidate.source__status_id)
-endfunction
-
-let s:source.action_table['*'].remove_favorite = {
-      \ 'description' : 'remove favorit tweet',
-      \ 'is_quit' : 0,
-      \ }
-
-function! s:source.action_table['*'].remove_favorite.func(candidate)
-    if !unite#util#input_yesno('remove favorite this tweet ?')
-      return
-    endif
-    echoerr a:candidate.source__status_id
-    call rubytter#request('remove_favorite' , a:candidate.source__status_id)
-endfunction
-
 function! s:source.hooks.on_close(args, context)
   let no = bufnr(s:buf_name)
   try | execute "bd! " . no | catch | endtry
@@ -122,7 +94,7 @@ function! s:source.gather_candidates(args, context)
   if method == 'twitter'
     let method = 'home_timeline'
   endif
-  " I want to change from a:args to a:000
+
   try
     let result = rubytter#request(method , a:args)
   catch 
@@ -175,31 +147,6 @@ function! s:ljust(str, size, ...)
   endwhile
   return str
 endfunction
-
-" test
-
-"echo "start"
-
-"let s:source = {'action_table' : {'*' : {}}}
-
-"function! s:initialize()
-  "let list = ['a']
-  "for v in list
-    "let s:source.action_table['*'][v] = {}
-    "function s:source.action_table['*'][v].hoge(candicate)
-      "echo a:candicate.name
-    "endfunction
-  "endfor
-
-"endfunction
-
-"call s:initialize()
-
-"call s:source.action_table['*'].a.hoge({'name' : 'hoge'})
-
-"echo "end"
-
-"call s:source.action_table['*'].a({'name' , 'hohoho'})
 
 
 let &cpo = s:save_cpo
