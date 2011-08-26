@@ -33,6 +33,31 @@ function! s:source.action_table['*'].preview.func(candidate)
     execute 'wincmd p'
 endfunction
 
+
+let s:source.action_table['*'].reply = {
+      \ 'description' : 'reply tweet',
+      \ 'is_quit' : 0,
+      \ }
+
+function! s:source.action_table['*'].reply.func(candidate)
+    let bufnr = bufwinnr(s:buf_name)
+    if bufnr > 0
+      exec bufnr.'wincmd w'
+    else
+      execute 'below split ' . s:buf_name
+    end
+    execute '3 wincmd _'
+    setlocal modifiable
+    silent %delete _
+    setlocal bufhidden=hide
+    setlocal noswapfile
+    call append(0 , '@' . a:candidate.source__screen_name . ' ')
+    setlocal nomodified
+    nnoremap <buffer> <silent> <CR> :call <SID>post()<CR>
+    :0
+    startinsert!
+endfunction
+
 function! s:source.hooks.on_close(args, context)
   let no = bufnr(s:buf_name)
   try | execute "bd! " . no | catch | endtry
@@ -56,6 +81,8 @@ function! s:source.gather_candidates(args, context)
         \ '{
         \ "word": s:ljust(v:val.user.screen_name , 15) . " : " . v:val.text,
         \ "source": "twitter",
+        \ "source__screen_name" : v:val.user.screen_name ,
+        \ "source__text"        : v:val.text ,
         \ }')
 endfunction
 
@@ -70,6 +97,14 @@ function! unite#sources#twitter#define()
         \  "description": "candidates from twitter of " . v:val.name}))')
   call add(sources , s:source)
   return sources
+endfunction
+
+function! s:post()
+  let text = join(getline(1, "$"))
+  call rubytter#request('update' , text)
+  bd!
+  redraw
+  echo 'sended .. ' . text 
 endfunction
 
 function! s:ljust(str, size, ...)
