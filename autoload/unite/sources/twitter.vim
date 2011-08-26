@@ -10,7 +10,7 @@ let s:source = {
       \ }
 
 let s:source.action_table['*'].preview = {
-      \ 'description' : 'preview this colorscheme',
+      \ 'description' : 'preview this tweet',
       \ 'is_quit' : 0,
       \ }
 
