@@ -35,22 +35,23 @@ endfunction
 
 function! s:initialize_yesno_actions()
   let list = [
-        \ {'m' : 'favorite'        , 'desc' : 'favorite tweet' , 'msg' : 'favorite this tweet ?'} ,
-        \ {'m' : 'remove_favorite' , 'desc' : 'remove tweet'   , 'msg' : 'remove this tweet ?'  } ,
-        \ {'m' : 'retweet'         , 'desc' : 'retweet'        , 'msg' : 'retweet this tweet ?' } ,
-        \ {'m' : 'remove'          , 'desc' : 'remove tweet'   , 'msg' : 'remvoe this tweet ?'  } ,
+        \ {'action' : 'favorite'        , 'desc' : 'favorite tweet' , 'msg' : 'favorite this tweet ?'} ,
+        \ {'action' : 'remove_favorite' , 'desc' : 'remove tweet'   , 'msg' : 'remove this tweet ?'  } ,
+        \ {'action' : 'retweet'         , 'desc' : 'retweet'        , 'msg' : 'retweet this tweet ?' } ,
+        \ {'action' : 'remove_status'   , 'desc' : 'remove tweet'   , 'msg' : 'remvoe this tweet ?'  } ,
         \ ]
   for v in list
-    let s:source.action_table['*'][v.m] = {
+    let s:source.action_table['*'][v.action] = {
           \ 'description' : v.desc ,
           \ 'is_quit'     : 0 ,
+          \ 'msg'         : v.msg ,
+          \ 'action'      : v.action ,
           \ }
-    let s:source.action_table['*'][v.m] = copy(v)
-    function s:source.action_table['*'][v.m].func(candidate) dict
+    function s:source.action_table['*'][v.action].func(candidate) dict
       if !unite#util#input_yesno(self.msg)
         return
       endif
-      call rubytter#request(self.m , a:candidate.source__status_id)
+      call rubytter#request(self.action , a:candidate.source__status_id)
     endfunction
   endfor
 endfunction
