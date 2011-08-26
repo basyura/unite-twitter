@@ -1,7 +1,41 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-let s:source = {'name': 'twitter'}
+let s:preview_buf_name = 'unite_twitter_preview'
+
+let s:source = {
+      \ 'name': 'twitter' ,
+      \ 'hooks': {},
+      \ 'action_table': {'*': {}},
+      \ }
+
+let s:source.action_table['*'].preview = {
+      \ 'description' : 'preview this colorscheme',
+      \ 'is_quit' : 0,
+      \ }
+
+function! s:source.action_table['*'].preview.func(candidate)
+    let bufnr = bufwinnr(s:preview_buf_name)
+    if bufnr > 0
+      exec bufnr.'wincmd w'
+    else
+      execute 'below split ' . s:preview_buf_name
+    end
+    execute '3 wincmd _'
+    setlocal modifiable
+    silent %delete _
+    setlocal bufhidden=hide
+    setlocal noswapfile
+    call append(0 , a:candidate.word)
+    setlocal nomodified
+    setlocal nomodifiable
+    execute 'wincmd p'
+endfunction
+
+function! s:source.hooks.on_close(args, context)
+  let no = bufnr(s:preview_buf_name)
+  try | execute "bd! " . no | catch | endtry
+endfunction
 
 function! s:source.gather_candidates(args, context)
   let method = substitute(self.name , "twitter/" , "" , "")
