@@ -61,7 +61,8 @@ endfunction
 function! unite#sources#twitter#define()
   let sources = map([
         \ {'name': 'list_statuses'},
-        \ {'name': 'mentions'},
+        \ {'name': 'mentions'     },
+        \ {'name': 'user_timeline'},
         \ ],
         \ 'extend(copy(s:source),
         \  extend(v:val, {"name": "twitter/" . v:val.name,
