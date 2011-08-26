@@ -61,6 +61,57 @@ function! s:source.action_table['*'].reply.func(candidate)
     startinsert!
 endfunction
 
+let s:source.action_table['*'].retweet = {
+      \ 'description' : 'retweet',
+      \ 'is_quit' : 0,
+      \ }
+
+function! s:source.action_table['*'].retweet.func(candidate)
+    if !unite#util#input_yesno('retweet this tweet ?')
+      return
+    endif
+    call rubytter#request('retweet' , a:candidate.source__status_id)
+endfunction
+
+let s:source.action_table['*'].remove = {
+      \ 'description' : 'remove tweet',
+      \ 'is_quit' : 0,
+      \ }
+
+function! s:source.action_table['*'].remove.func(candidate)
+    if !unite#util#input_yesno('remove this tweet ?')
+      return
+    endif
+    echoerr a:candidate.source__status_id
+    call rubytter#request('remove_status' , a:candidate.source__status_id)
+endfunction
+
+let s:source.action_table['*'].favorite = {
+      \ 'description' : 'favorit tweet',
+      \ 'is_quit' : 0,
+      \ }
+
+function! s:source.action_table['*'].favorite.func(candidate)
+    if !unite#util#input_yesno('favorite this tweet ?')
+      return
+    endif
+    echoerr a:candidate.source__status_id
+    call rubytter#request('favorite' , a:candidate.source__status_id)
+endfunction
+
+let s:source.action_table['*'].remove_favorite = {
+      \ 'description' : 'remove favorit tweet',
+      \ 'is_quit' : 0,
+      \ }
+
+function! s:source.action_table['*'].remove_favorite.func(candidate)
+    if !unite#util#input_yesno('remove favorite this tweet ?')
+      return
+    endif
+    echoerr a:candidate.source__status_id
+    call rubytter#request('remove_favorite' , a:candidate.source__status_id)
+endfunction
+
 function! s:source.hooks.on_close(args, context)
   let no = bufnr(s:buf_name)
   try | execute "bd! " . no | catch | endtry
