@@ -176,5 +176,32 @@ function! s:ljust(str, size, ...)
   return str
 endfunction
 
+" test
+
+"echo "start"
+
+"let s:source = {'action_table' : {'*' : {}}}
+
+"function! s:initialize()
+  "let list = ['a']
+  "for v in list
+    "let s:source.action_table['*'][v] = {}
+    "function s:source.action_table['*'][v].hoge(candicate)
+      "echo a:candicate.name
+    "endfunction
+  "endfor
+
+"endfunction
+
+"call s:initialize()
+
+"call s:source.action_table['*'].a.hoge({'name' : 'hoge'})
+
+"echo "end"
+
+"call s:source.action_table['*'].a({'name' , 'hohoho'})
+
+
 let &cpo = s:save_cpo
 unlet s:save_cpo
+
