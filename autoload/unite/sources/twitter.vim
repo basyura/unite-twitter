@@ -85,6 +85,15 @@ function! s:source.action_table['*'].reply.func(candidate)
     startinsert!
 endfunction
 
+let s:source.action_table['*'].user_timeline = {
+      \ 'description' : 'user timeline',
+      \ 'is_quit' : 0,
+      \ }
+
+function! s:source.action_table['*'].user_timeline.func(candidate)
+  execute ':Unite twitter/user_timeline:' . a:candidate.source__screen_name
+endfunction
+
 function! s:source.hooks.on_close(args, context)
   let no = bufnr(s:buf_name)
   try | execute "bd! " . no | catch | endtry
