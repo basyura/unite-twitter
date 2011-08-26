@@ -53,6 +53,9 @@ function! s:source.action_table['*'].reply.func(candidate)
     setlocal noswapfile
     call append(0 , '@' . a:candidate.source__screen_name . ' ')
     setlocal nomodified
+
+    let b:post_param = {"in_reply_to_status_id" : a:candidate.source__status_id}
+
     nnoremap <buffer> <silent> <CR> :call <SID>post()<CR>
     :0
     startinsert!
@@ -83,6 +86,7 @@ function! s:source.gather_candidates(args, context)
         \ "source": "twitter",
         \ "source__screen_name" : v:val.user.screen_name ,
         \ "source__text"        : v:val.text ,
+        \ "source__status_id"   : v:val.id   ,
         \ }')
 endfunction
 
@@ -100,8 +104,10 @@ function! unite#sources#twitter#define()
 endfunction
 
 function! s:post()
-  let text = join(getline(1, "$"))
-  call rubytter#request('update' , text)
+  let text  = join(getline(1, "$"))
+  let param = exists("b:post_param") ? b:post_param : {}
+  call rubytter#request('update' , text , param)
+  unlet b:post_param
   bd!
   redraw
   echo 'sended .. ' . text 
