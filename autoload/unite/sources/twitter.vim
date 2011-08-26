@@ -29,6 +29,7 @@ function! s:source.action_table['*'].preview.func(candidate)
     call append(0 , a:candidate.word)
     setlocal nomodified
     setlocal nomodifiable
+    :0
     execute 'wincmd p'
 endfunction
 
