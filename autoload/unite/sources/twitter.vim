@@ -1,7 +1,7 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-let s:preview_buf_name = 'unite_twitter_preview'
+let s:buf_name = 'unite_twitter_buffer'
 
 let s:source = {
       \ 'name': 'twitter' ,
@@ -15,11 +15,11 @@ let s:source.action_table['*'].preview = {
       \ }
 
 function! s:source.action_table['*'].preview.func(candidate)
-    let bufnr = bufwinnr(s:preview_buf_name)
+    let bufnr = bufwinnr(s:buf_name)
     if bufnr > 0
       exec bufnr.'wincmd w'
     else
-      execute 'below split ' . s:preview_buf_name
+      execute 'below split ' . s:buf_name
     end
     execute '3 wincmd _'
     setlocal modifiable
@@ -34,7 +34,7 @@ function! s:source.action_table['*'].preview.func(candidate)
 endfunction
 
 function! s:source.hooks.on_close(args, context)
-  let no = bufnr(s:preview_buf_name)
+  let no = bufnr(s:buf_name)
   try | execute "bd! " . no | catch | endtry
 endfunction
 
