@@ -7,6 +7,7 @@ let s:source = {
       \ 'name': 'twitter' ,
       \ 'hooks': {},
       \ 'action_table': {'*': {}},
+      \ 'default_action' : 'preview' ,
       \ }
 
 let s:source.action_table['*'].preview = {
