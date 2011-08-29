@@ -4,18 +4,25 @@ set cpo&vim
 let s:buf_name = 'unite_twitter_buffer'
 
 let s:source = {
-      \ 'name': 'twitter' ,
-      \ 'hooks': {},
-      \ 'action_table': {'*': {}},
+      \ 'name'  : 'twitter' ,
+      \ 'hooks' : {} ,
+      \ 'action_table'   : {'*': {}} ,
       \ 'default_action' : 'preview' ,
       \ }
 
 let s:source.action_table['*'].preview = {
       \ 'description' : 'preview this tweet',
-      \ 'is_quit' : 0,
+      \ 'is_quit'     : 0,
       \ }
 
 function! s:source.action_table['*'].preview.func(candidate)
+
+    if a:candidate.source__load_next
+      execute ":Unite " . a:candidate.method
+      echo 'now loading ....'
+      return
+    endif
+
     let bufnr = bufwinnr(s:buf_name)
     if bufnr > 0
       exec bufnr.'wincmd w'
@@ -61,10 +68,11 @@ call s:initialize_yesno_actions()
 
 let s:source.action_table['*'].reply = {
       \ 'description' : 'reply tweet',
-      \ 'is_quit' : 0,
+      \ 'is_quit'     : 0,
       \ }
 
 function! s:source.action_table['*'].reply.func(candidate)
+    
     let bufnr = bufwinnr(s:buf_name)
     if bufnr > 0
       exec bufnr.'wincmd w'
@@ -88,11 +96,11 @@ endfunction
 
 let s:source.action_table['*'].user_timeline = {
       \ 'description' : 'user timeline',
-      \ 'is_quit' : 0,
+      \ 'is_quit'     : 0,
       \ }
 
 function! s:source.action_table['*'].user_timeline.func(candidate)
-  execute ':Unite twitter/user_timeline:' . a:candidate.source__screen_name
+  execute unite#start([['twitter/user_timeline' , a:candidate.source__screen_name]])
 endfunction
 
 function! s:source.hooks.on_close(args, context)
@@ -114,14 +122,26 @@ function! s:source.gather_candidates(args, context)
           \ "source" : "common" ,
           \ }')
   endtry
-  return map(result , 
+
+  let tweets = map(result , 
         \ '{
-        \ "word": s:ljust(v:val.user.screen_name , 15) . " : " . v:val.text,
-        \ "source": "twitter",
+        \ "word"   : s:ljust(v:val.user.screen_name , 15) . " : " . v:val.text,
+        \ "source" : "twitter",
         \ "source__screen_name" : v:val.user.screen_name ,
         \ "source__text"        : v:val.text ,
         \ "source__status_id"   : v:val.id   ,
+        \ "source__load_next"   : 0 ,
         \ }')
+
+  call add(tweets , {
+        \ "word"    : 'load more ...' ,
+        \ "source"  : "twitter" ,
+        \ "source__load_next" : 1 ,
+        \ "source__status_id" : result[-1].source__status_id ,
+        \ "source__method"    : self.name ,
+        \})
+
+  return tweets
 endfunction
 
 function! unite#sources#twitter#define()
