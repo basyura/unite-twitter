@@ -17,11 +17,11 @@ let s:source.action_table['*'].preview = {
 
 function! s:source.action_table['*'].preview.func(candidate)
 
-    if a:candidate.source__load_next
-      execute ":Unite " . a:candidate.method
-      echo 'now loading ....'
-      return
-    endif
+    "if a:candidate.source__load_next
+      "execute ":Unite " . a:candidate.method
+      "echo 'now loading ....'
+      "return
+    "endif
 
     let bufnr = bufwinnr(s:buf_name)
     if bufnr > 0
@@ -115,7 +115,9 @@ function! s:source.gather_candidates(args, context)
   endif
 
   try
-    let result = rubytter#request(method , a:args)
+    let args   = a:args
+    call add(args , {"count" : 50 , "per_page" : 50})
+    let result = rubytter#request(method , args)
   catch 
     return map(split(v:exception , "\n") , '{
           \ "word"   : v:val ,
@@ -133,13 +135,13 @@ function! s:source.gather_candidates(args, context)
         \ "source__load_next"   : 0 ,
         \ }')
 
-  call add(tweets , {
-        \ "word"    : 'load more ...' ,
-        \ "source"  : "twitter" ,
-        \ "source__load_next" : 1 ,
-        \ "source__status_id" : result[-1].source__status_id ,
-        \ "source__method"    : self.name ,
-        \})
+  "call add(tweets , {
+        "\ "word"    : 'load more ...' ,
+        "\ "source"  : "twitter" ,
+        "\ "source__load_next" : 1 ,
+        "\ "source__status_id" : result[-1].source__status_id ,
+        "\ "source__method"    : self.name ,
+        "\})
 
   return tweets
 endfunction
