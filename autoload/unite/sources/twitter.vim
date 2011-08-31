@@ -166,7 +166,7 @@ function! s:post()
   unlet b:post_param
   bd!
   redraw
-  echo 'sended .. ' . text 
+  echo 'sent ... ' . text 
 endfunction
 
 function! s:ljust(str, size, ...)
