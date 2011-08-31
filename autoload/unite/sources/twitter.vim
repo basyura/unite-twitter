@@ -125,6 +125,12 @@ function! s:source.gather_candidates(args, context)
           \ }')
   endtry
 
+
+  if type(result) == 4
+    let tmp = [result] | unlet result
+    let result = tmp
+  endif
+
   let tweets = map(result , 
         \ '{
         \ "word"   : s:ljust(v:val.user.screen_name , 15) . " : " . v:val.text,
@@ -151,6 +157,7 @@ function! unite#sources#twitter#define()
         \ {'name': 'list_statuses'},
         \ {'name': 'mentions'     },
         \ {'name': 'user_timeline'},
+        \ {'name': 'show'},
         \ ],
         \ 'extend(copy(s:source),
         \  extend(v:val, {"name": "twitter/" . v:val.name,
