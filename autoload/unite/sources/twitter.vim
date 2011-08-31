@@ -103,6 +103,25 @@ function! s:source.action_table['*'].user_timeline.func(candidate)
   execute unite#start([['twitter/user_timeline' , a:candidate.source__screen_name]])
 endfunction
 
+let s:source.action_table['*'].inReplyTo = {
+      \ 'description' : 'inReplyTo tweet',
+      \ 'is_quit'     : 0,
+      \ }
+
+function! s:source.action_table['*'].inReplyTo.func(candidate)
+  let id = a:candidate.source__in_reply_to_status_id
+  let list = []
+  while 1
+    if id == ""
+      break
+    endif
+    let tweet = rubytter#request("show" , id)
+    call add(list , tweet)
+    let id = tweet.in_reply_to_status_id
+  endwhile
+  echo list
+endfunction
+
 function! s:source.hooks.on_close(args, context)
   let no = bufnr(s:buf_name)
   try | execute "bd! " . no | catch | endtry
@@ -138,6 +157,7 @@ function! s:source.gather_candidates(args, context)
         \ "source__screen_name" : v:val.user.screen_name ,
         \ "source__text"        : v:val.text ,
         \ "source__status_id"   : v:val.id   ,
+        \ "source__in_reply_to_status_id" : v:val.in_reply_to_status_id  ,
         \ "source__load_next"   : 0 ,
         \ }')
 
