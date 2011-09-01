@@ -132,6 +132,8 @@ function! s:source.gather_candidates(args, context)
   try
     if method == 'show'
       let result = s:gather_candidates_show(a:args, a:context)
+    elseif method == 'friends'
+      return s:gather_candidates_friends(a:args, a:context)
     else
       let args = a:args
       call add(args , {"count" : 50 , "per_page" : 50})
@@ -154,10 +156,8 @@ function! s:source.gather_candidates(args, context)
         \ "word"   : s:ljust(v:val.user.screen_name , 15) . " : " . v:val.text,
         \ "source" : "twitter",
         \ "source__screen_name" : v:val.user.screen_name ,
-        \ "source__text"        : v:val.text ,
         \ "source__status_id"   : v:val.id   ,
         \ "source__in_reply_to_status_id" : v:val.in_reply_to_status_id  ,
-        \ "source__load_next"   : 0 ,
         \ }')
 
   "call add(tweets , {
@@ -184,12 +184,41 @@ function! s:gather_candidates_show(args, context)
   endwhile
 endfunction
 
+function! s:gather_candidates_friends(args, context)
+
+  let friends = []
+  let page = 1
+  "while 1
+    " how to get my screen name ?
+    let tmp = rubytter#request("friends" , "basyura" , {"page" : page})
+    if len(tmp) == 0
+      break
+    endif
+    call extend(friends , tmp)
+    let page += 1
+  "endwhile
+
+  let candidates = []
+  for v in friends
+    let tweets =  {
+          \ "word"   : s:ljust(v.screen_name , 15) . " : " . v.description ,
+          \ "source" : "twitter",
+          \ "source__screen_name" : v.screen_name ,
+          \ "source__status_id"   : "" ,
+          \ "source__in_reply_to_status_id" : ""  ,
+          \ }
+      call add(candidates , tweets)
+    endfor
+  return candidates
+endfunction
+
 function! unite#sources#twitter#define()
   let sources = map([
         \ {'name': 'list_statuses'},
         \ {'name': 'mentions'     },
         \ {'name': 'user_timeline'},
         \ {'name': 'show'},
+        \ {'name': 'friends'},
         \ ],
         \ 'extend(copy(s:source),
         \  extend(v:val, {"name": "twitter/" . v:val.name,
