@@ -102,24 +102,20 @@ let s:source.action_table['*'].user_timeline = {
 function! s:source.action_table['*'].user_timeline.func(candidate)
   execute unite#start([['twitter/user_timeline' , a:candidate.source__screen_name]])
 endfunction
-
+"
+" action - in reply to 
+"
 let s:source.action_table['*'].inReplyTo = {
       \ 'description' : 'inReplyTo tweet',
-      \ 'is_quit'     : 0,
       \ }
 
 function! s:source.action_table['*'].inReplyTo.func(candidate)
   let id = a:candidate.source__in_reply_to_status_id
-  let list = []
-  while 1
-    if id == ""
-      break
-    endif
-    let tweet = rubytter#request("show" , id)
-    call add(list , tweet)
-    let id = tweet.in_reply_to_status_id
-  endwhile
-  echo list
+  if id == ""
+    call unite#util#print_error("no reply")
+    return
+  endif
+  execute unite#start([['twitter/show' , a:candidate.source__status_id]])
 endfunction
 
 function! s:source.hooks.on_close(args, context)
@@ -134,16 +130,19 @@ function! s:source.gather_candidates(args, context)
   endif
 
   try
-    let args   = a:args
-    call add(args , {"count" : 50 , "per_page" : 50})
-    let result = rubytter#request(method , args)
+    if method == 'show'
+      let result = s:gather_candidates_show(a:args, a:context)
+    else
+      let args = a:args
+      call add(args , {"count" : 50 , "per_page" : 50})
+      let result = rubytter#request(method , args)
+    endif
   catch 
     return map(split(v:exception , "\n") , '{
           \ "word"   : v:val ,
           \ "source" : "common" ,
           \ }')
   endtry
-
 
   if type(result) == 4
     let tmp = [result] | unlet result
@@ -170,6 +169,19 @@ function! s:source.gather_candidates(args, context)
         "\})
 
   return tweets
+endfunction
+
+function! s:gather_candidates_show(args, context)
+  let id = a:args[0]
+  let list = []
+  while 1
+    if id == ""
+      return list
+    endif
+    let tweet = rubytter#request("show" , id)
+    call add(list , tweet)
+    let id = tweet.in_reply_to_status_id
+  endwhile
 endfunction
 
 function! unite#sources#twitter#define()
