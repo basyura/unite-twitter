@@ -82,6 +82,7 @@ function! s:source.action_table['*'].reply.func(candidate)
       execute 'below split ' . s:buf_name
     end
     execute '3 wincmd _'
+    let &filetype = 'unite_twitter'
     setlocal modifiable
     silent %delete _
     setlocal bufhidden=hide
