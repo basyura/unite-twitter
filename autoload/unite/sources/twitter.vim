@@ -3,6 +3,8 @@ set cpo&vim
 
 let s:buf_name = 'unite_twitter_buffer'
 
+let s:friends = []
+
 let s:source = {
       \ 'name'  : 'twitter' ,
       \ 'hooks' : {} ,
@@ -124,6 +126,11 @@ function! s:source.hooks.on_close(args, context)
 endfunction
 
 function! s:source.gather_candidates(args, context)
+
+  if !exists("s:user_info")
+    let s:user_info = rubytter#request("verify_credentials")
+  endif
+
   let method = substitute(self.name , "twitter/" , "" , "")
   if method == 'twitter'
     let method = 'home_timeline'
@@ -186,17 +193,25 @@ endfunction
 
 function! s:gather_candidates_friends(args, context)
 
+  if !unite#util#input_yesno("it takes long time")
+    return []
+  endif
+
+  if len(s:friends) != 0
+    return s:friends
+  endif
+
   let friends = []
-  let page = 1
-  "while 1
+  let next_cursor = "-1"
+  while 1
     " how to get my screen name ?
-    let tmp = rubytter#request("friends" , "basyura" , {"page" : page})
-    if len(tmp) == 0
+    let tmp = rubytter#request("friends" , s:user_info.screen_name , {"cursor" : next_cursor})
+    call extend(friends , tmp.users)
+    let next_cursor = tmp.next_cursor
+    if next_cursor == "0"
       break
     endif
-    call extend(friends , tmp)
-    let page += 1
-  "endwhile
+  endwhile
 
   let candidates = []
   for v in friends
@@ -208,7 +223,8 @@ function! s:gather_candidates_friends(args, context)
           \ "source__in_reply_to_status_id" : ""  ,
           \ }
       call add(candidates , tweets)
-    endfor
+  endfor
+  let s:friends = candidates
   return candidates
 endfunction
 
