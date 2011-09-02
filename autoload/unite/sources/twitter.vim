@@ -2,6 +2,16 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 let s:buf_name = 'unite_twitter_buffer'
+let s:screen_name_cache_path = g:unite_data_directory . '/twitter/screen_name'
+
+let s:screen_name_cache = {}
+if filereadable(s:screen_name_cache_path)
+  for v in readfile(s:screen_name_cache_path)
+    let s:screen_name_cache[v] = 1
+  endfor
+else
+  call mkdir(g:unite_data_directory . '/twitter' , "p")
+endif
 
 let s:friends = []
 
@@ -124,6 +134,7 @@ endfunction
 function! s:source.hooks.on_close(args, context)
   let no = bufnr(s:buf_name)
   try | execute "bd! " . no | catch | endtry
+  call writefile(keys(s:screen_name_cache) , s:screen_name_cache_path)
 endfunction
 
 function! s:source.gather_candidates(args, context)
@@ -159,22 +170,17 @@ function! s:source.gather_candidates(args, context)
     let result = tmp
   endif
 
-  let tweets = map(result , 
-        \ '{
-        \ "word"   : s:ljust(v:val.user.screen_name , 15) . " : " . v:val.text,
+  let tweets = []
+  for t in result
+    call add(tweets , {
+        \ "word"   : s:ljust(t.user.screen_name , 15) . " : " . t.text,
         \ "source" : "twitter",
-        \ "source__screen_name" : v:val.user.screen_name ,
-        \ "source__status_id"   : v:val.id   ,
-        \ "source__in_reply_to_status_id" : v:val.in_reply_to_status_id  ,
-        \ }')
-
-  "call add(tweets , {
-        "\ "word"    : 'load more ...' ,
-        "\ "source"  : "twitter" ,
-        "\ "source__load_next" : 1 ,
-        "\ "source__status_id" : result[-1].source__status_id ,
-        "\ "source__method"    : self.name ,
-        "\})
+        \ "source__screen_name" : t.user.screen_name ,
+        \ "source__status_id"   : t.id   ,
+        \ "source__in_reply_to_status_id" : t.in_reply_to_status_id  ,
+          \ })
+    let s:screen_name_cache[t.user.screen_name] = 1
+  endfor
 
   return tweets
 endfunction
