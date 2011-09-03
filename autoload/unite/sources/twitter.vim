@@ -80,10 +80,17 @@ function! s:reply_list(in_reply_to_status_id)
     if id == ""
       return list
     endif
-    let tweet = rubytter#request("show" , id)
+    try
+      let tweet = rubytter#request("show" , id)
+    catch
+      echo v:exception
+      echo 'id = ' . id
+      break
+    endtry
     call add(list , tweet)
     let id = tweet.in_reply_to_status_id
   endwhile
+  return list
 endfunction
 
 function! s:initialize_yesno_actions()
