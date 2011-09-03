@@ -45,16 +45,44 @@ function! s:source.action_table['*'].preview.func(candidate)
     else
       execute 'below split ' . s:buf_name
     end
+    let &filetype = 'unite_twitter_preview'
     execute '3 wincmd _'
     setlocal modifiable
     silent %delete _
-    setlocal bufhidden=hide
-    setlocal noswapfile
     call append(0 , a:candidate.word)
+
+    for reply in s:reply_list(a:candidate.source__in_reply_to_status_id)
+      call append(line('$') , reply.user.screen_name . ' : ' . reply.text)
+    endfor
+
     setlocal nomodified
     setlocal nomodifiable
     :0
     execute 'wincmd p'
+endfunction
+
+augroup UniteTwitterPreview
+  autocmd! UniteTwitterPreview
+  autocmd FileType unite_twitter_preview call s:unite_twitter_preview_settings()
+augroup END
+
+function! s:unite_twitter_preview_settings()
+  setlocal bufhidden=delete 
+  setlocal nobuflisted
+  setlocal noswapfile
+endfunction
+
+function! s:reply_list(in_reply_to_status_id)
+  let id = a:in_reply_to_status_id
+  let list = []
+  while 1
+    if id == ""
+      return list
+    endif
+    let tweet = rubytter#request("show" , id)
+    call add(list , tweet)
+    let id = tweet.in_reply_to_status_id
+  endwhile
 endfunction
 
 function! s:initialize_yesno_actions()
