@@ -46,18 +46,19 @@ function! s:source.action_table['*'].preview.func(candidate)
       execute 'below split ' . s:buf_name
     end
     let &filetype = 'unite_twitter_preview'
-    execute '3 wincmd _'
     setlocal modifiable
     silent %delete _
     call append(0 , a:candidate.word)
 
     for reply in s:reply_list(a:candidate.source__in_reply_to_status_id)
-      call append(line('$') , reply.user.screen_name . ' : ' . reply.text)
+      call append(line('$') - 1 , s:ljust(reply.user.screen_name , 15) . ' : ' . reply.text)
     endfor
+
+    execute (line('$') + 1) . ' wincmd _'
 
     setlocal nomodified
     setlocal nomodifiable
-    :0
+    call cursor(1,1)
     execute 'wincmd p'
 endfunction
 
