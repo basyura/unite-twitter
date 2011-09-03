@@ -2,7 +2,9 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 let s:buf_name = 'unite_twitter_buffer'
-let s:screen_name_cache_path = g:unite_data_directory . '/twitter/screen_name'
+
+let s:cache_directory = g:unite_data_directory . '/twitter'
+let s:screen_name_cache_path = s:cache_directory . '/screen_name'
 
 let s:screen_name_cache = {}
 if filereadable(s:screen_name_cache_path)
@@ -10,7 +12,9 @@ if filereadable(s:screen_name_cache_path)
     let s:screen_name_cache[v] = 1
   endfor
 else
-  call mkdir(g:unite_data_directory . '/twitter' , "p")
+  if !isdirectory(s:cache_directory)
+    call mkdir(s:cache_directory , "p")
+  endif
 endif
 
 let s:friends = []
