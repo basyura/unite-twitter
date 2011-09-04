@@ -170,6 +170,19 @@ function! s:source.action_table['*'].inReplyTo.func(candidate)
   endif
   execute unite#start([['twitter/show' , a:candidate.source__status_id]])
 endfunction
+"
+" action - open browser
+"
+let s:source.action_table['*'].openBrowser= {
+      \ 'description' : 'open a tweet with browser',
+      \ }
+
+function! s:source.action_table['*'].openBrowser.func(candidate)
+  let url = 'https://twitter.com/' . 
+              \ a:candidate.source__screen_name . '/status/' .
+              \ a:candidate.source__status_id
+  call unite#util#system('open ' . url)
+endfunction
 
 function! s:source.hooks.on_close(args, context)
   let no = bufnr(s:buf_name)
