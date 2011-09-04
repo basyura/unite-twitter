@@ -7,7 +7,7 @@ let s:buf_name = 'unite_twitter'
 let s:cache_directory = g:unite_data_directory . '/twitter'
 let s:screen_name_cache_path = s:cache_directory . '/screen_name'
 
-let s:alias = {
+let s:api_alias = {
       \ 'twitter' : 'home_timeline' ,
       \ 'list'    : 'list_statuses' ,
       \ 'user'    : 'user_timeline' ,
@@ -208,7 +208,7 @@ function! s:source.gather_candidates(args, context)
   endif
 
   let method = substitute(self.name , "twitter/" , "" , "")
-  let method = get(s:alias , method)
+  let method = get(s:api_alias , method , method)
 
   try
     if method == 'show'
