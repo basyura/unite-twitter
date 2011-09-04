@@ -1,6 +1,12 @@
 
 command! UniteTwitterPost :call s:open_buffer()
 
+augroup UniteTwitter
+  autocmd! UniteTwitter
+  autocmd FileType    unite_twitter call s:unite_twitter_settings()
+  autocmd BufWinLeave unite_twitter call s:save_history_at_leave()
+augroup END
+
 function! s:open_buffer()
   let bufnr = bufwinnr('unite_twitter')
   if bufnr > 0
@@ -8,8 +14,10 @@ function! s:open_buffer()
   else
     execute 'below split unite_twitter' 
     execute '2 wincmd _'
-    let &filetype = 'unite_twitter'
   endif
+  setlocal modifiable
+  silent %delete _
+  let &filetype = 'unite_twitter'
   nnoremap <buffer> <silent> <CR> :call <SID>post()<CR>
   startinsert!
 endfunction
@@ -27,16 +35,12 @@ function! s:post()
   redraw | echo 'sending ... ok'
 endfunction
 
-augroup UniteTwitter
-  autocmd! UniteTwitter
-  autocmd FileType    unite_twitter call s:unite_twitter_settings()
-  autocmd BufWinLeave unite_twitter call s:save_history_at_leave()
-augroup END
-
 function! s:unite_twitter_settings()
   setlocal bufhidden=delete 
   setlocal nobuflisted
   setlocal noswapfile
+  setlocal modifiable
+  setlocal nomodified
   nnoremap <buffer> <silent> q :bd!<CR>
   nnoremap <buffer> <silent> <C-s> :call <SID>show_history()<CR>0
   inoremap <buffer> <silent> <C-s> <ESC>:call <SID>show_history()<CR>0

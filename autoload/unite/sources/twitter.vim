@@ -1,7 +1,7 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-let s:buf_name = 'unite_twitter_buffer'
+let s:buf_name = 'unite_twitter'
 
 let s:cache_directory = g:unite_data_directory . '/twitter'
 let s:screen_name_cache_path = s:cache_directory . '/screen_name'
@@ -32,12 +32,6 @@ let s:source.action_table['*'].preview = {
       \ }
 
 function! s:source.action_table['*'].preview.func(candidate)
-
-    "if a:candidate.source__load_next
-      "execute ":Unite " . a:candidate.method
-      "echo 'now loading ....'
-      "return
-    "endif
 
     let bufnr = bufwinnr(s:buf_name)
     if bufnr > 0
@@ -305,6 +299,11 @@ endfunction
 
 function! s:post()
   let text  = join(getline(1, "$"))
+  if strchars(text) > 140
+    unite#util#print_error("over 140 chars")
+    return
+  endif
+
   let param = exists("b:post_param") ? b:post_param : {}
   call rubytter#request('update' , text , param)
   unlet b:post_param
