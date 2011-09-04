@@ -7,6 +7,12 @@ let s:buf_name = 'unite_twitter'
 let s:cache_directory = g:unite_data_directory . '/twitter'
 let s:screen_name_cache_path = s:cache_directory . '/screen_name'
 
+let s:alias = {
+      \ 'twitter' : 'home_timeline' ,
+      \ 'list'    : 'list_statuses' ,
+      \ 'user'    : 'user_timeline' ,
+      \}
+
 let s:screen_name_cache = {}
 if filereadable(s:screen_name_cache_path)
   for v in readfile(s:screen_name_cache_path)
@@ -134,13 +140,13 @@ function! s:source.action_table['*'].reply.func(candidate)
     let b:post_param = {"in_reply_to_status_id" : a:candidate.source__status_id}
 endfunction
 
-let s:source.action_table['*'].user_timeline = {
+let s:source.action_table['*'].user = {
       \ 'description' : 'user timeline',
       \ 'is_quit'     : 0,
       \ }
 
-function! s:source.action_table['*'].user_timeline.func(candidate)
-  execute unite#start([['twitter/user_timeline' , a:candidate.source__screen_name]])
+function! s:source.action_table['*'].user.func(candidate)
+  execute unite#start([['twitter/user' , a:candidate.source__screen_name]])
 endfunction
 "
 " action - in reply to 
@@ -160,11 +166,11 @@ endfunction
 "
 " action - open browser
 "
-let s:source.action_table['*'].openBrowser= {
+let s:source.action_table['*'].browser = {
       \ 'description' : 'open a tweet with browser',
       \ }
 
-function! s:source.action_table['*'].openBrowser.func(candidate)
+function! s:source.action_table['*'].browser.func(candidate)
   let url = 'https://twitter.com/' . 
               \ a:candidate.source__screen_name . '/status/' .
               \ a:candidate.source__status_id
@@ -173,11 +179,11 @@ endfunction
 "
 " action - open links
 "
-let s:source.action_table['*'].openLinks = {
+let s:source.action_table['*'].link = {
       \ 'description' : 'open links with browser',
       \ }
 
-function! s:source.action_table['*'].openLinks.func(candidate)
+function! s:source.action_table['*'].link.func(candidate)
   let text = a:candidate.word
   while 1
     let matched = matchlist(text, '\<https\?://\S\+')
@@ -202,9 +208,7 @@ function! s:source.gather_candidates(args, context)
   endif
 
   let method = substitute(self.name , "twitter/" , "" , "")
-  if method == 'twitter'
-    let method = 'home_timeline'
-  endif
+  let method = get(s:alias , method)
 
   try
     if method == 'show'
@@ -295,11 +299,11 @@ endfunction
 
 function! unite#sources#twitter#define()
   let sources = map([
-        \ {'name': 'list_statuses'},
-        \ {'name': 'mentions'     },
-        \ {'name': 'user_timeline'},
-        \ {'name': 'show'},
-        \ {'name': 'friends'},
+        \ {'name': 'list'     },
+        \ {'name': 'mentions' },
+        \ {'name': 'user'     },
+        \ {'name': 'show'     },
+        \ {'name': 'friends'  },
         \ ],
         \ 'extend(copy(s:source),
         \  extend(v:val, {"name": "twitter/" . v:val.name,
