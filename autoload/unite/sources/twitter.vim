@@ -170,6 +170,24 @@ function! s:source.action_table['*'].openBrowser.func(candidate)
               \ a:candidate.source__status_id
   call unite#util#system('open ' . url)
 endfunction
+"
+" action - open links
+"
+let s:source.action_table['*'].openLinks = {
+      \ 'description' : 'open links with browser',
+      \ }
+
+function! s:source.action_table['*'].openLinks.func(candidate)
+  let text = a:candidate.word
+  while 1
+    let matched = matchlist(text, '\<https\?://\S\+')
+    if len(matched) == 0
+      break
+    endif
+    call unite#util#system('open ' . matched[0])
+    let text = substitute(text , matched[0] , "" , "g")
+  endwhile
+endfunction
 
 function! s:source.hooks.on_close(args, context)
   let no = bufnr(s:buf_name)
