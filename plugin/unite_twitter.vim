@@ -1,4 +1,11 @@
 
+if exists('g:loaded_unite_twitter')
+  finish
+endif
+
+let s:save_cpo = &cpo
+set cpo&vim
+
 command! UniteTwitterPost :call s:open_buffer()
 
 augroup UniteTwitter
@@ -18,13 +25,16 @@ function! s:open_buffer()
   setlocal modifiable
   silent %delete _
   let &filetype = 'unite_twitter'
-  nnoremap <buffer> <silent> <CR> :call <SID>post()<CR>
   startinsert!
 endfunction
 
 function! s:post()
-  redraw | echo 'sending ... ' | sleep 1
   let text  = join(getline(1, "$"))
+  if strchars(text) > 140
+    call unite#util#print_error("over 140 chars")
+    return
+  endif
+  redraw | echo 'sending ... ' | sleep 1
   try
     call rubytter#request('update' , text)
   catch
@@ -44,7 +54,10 @@ function! s:unite_twitter_settings()
   nnoremap <buffer> <silent> q :bd!<CR>
   nnoremap <buffer> <silent> <C-s> :call <SID>show_history()<CR>0
   inoremap <buffer> <silent> <C-s> <ESC>:call <SID>show_history()<CR>0
+  nnoremap <buffer> <silent> <CR>  :call <SID>post()<CR>
   
+  :0
+  startinsert!
   " i want to judge by buffer variable
   if !exists('s:unite_twitter_bufwrite_cmd')
     autocmd BufWriteCmd <buffer> echo 'please enter to tweet'
@@ -75,3 +88,8 @@ function! s:save_history_at_leave()
     call add(s:history , msg)
   endif
 endfunction
+
+let g:loaded_unite_twitter = 1
+
+let &cpo = s:save_cpo
+unlet s:save_cpo

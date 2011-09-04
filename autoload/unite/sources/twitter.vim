@@ -1,3 +1,4 @@
+
 let s:save_cpo = &cpo
 set cpo&vim
 
@@ -118,7 +119,6 @@ let s:source.action_table['*'].reply = {
       \ }
 
 function! s:source.action_table['*'].reply.func(candidate)
-    
     let bufnr = bufwinnr(s:buf_name)
     if bufnr > 0
       exec bufnr.'wincmd w'
@@ -126,19 +126,12 @@ function! s:source.action_table['*'].reply.func(candidate)
       execute 'below split ' . s:buf_name
     end
     execute '3 wincmd _'
-    let &filetype = 'unite_twitter'
     setlocal modifiable
     silent %delete _
-    setlocal bufhidden=hide
-    setlocal noswapfile
     call append(0 , '@' . a:candidate.source__screen_name . ' ')
-    setlocal nomodified
+    let &filetype = 'unite_twitter'
 
     let b:post_param = {"in_reply_to_status_id" : a:candidate.source__status_id}
-
-    nnoremap <buffer> <silent> <CR> :call <SID>post()<CR>
-    :0
-    startinsert!
 endfunction
 
 let s:source.action_table['*'].user_timeline = {
