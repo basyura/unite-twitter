@@ -174,7 +174,7 @@ function! s:source.action_table['*'].browser.func(candidate)
   let url = 'https://twitter.com/' . 
               \ a:candidate.source__screen_name . '/status/' .
               \ a:candidate.source__status_id
-  call unite#util#system('open ' . url)
+  execute "OpenBrowser " . url
 endfunction
 "
 " action - open links
@@ -190,7 +190,7 @@ function! s:source.action_table['*'].link.func(candidate)
     if len(matched) == 0
       break
     endif
-    call unite#util#system('open ' . matched[0])
+    execute "OpenBrowser " . matched[0]
     let text = substitute(text , matched[0] , "" , "g")
   endwhile
 endfunction
