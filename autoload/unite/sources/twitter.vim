@@ -153,6 +153,7 @@ endfunction
 "
 let s:source.action_table['*'].inReplyTo = {
       \ 'description' : 'inReplyTo tweet',
+      \ 'is_quit'     : 0,
       \ }
 
 function! s:source.action_table['*'].inReplyTo.func(candidate)
@@ -168,6 +169,7 @@ endfunction
 "
 let s:source.action_table['*'].browser = {
       \ 'description' : 'open a tweet with browser',
+      \ 'is_quit'     : 0,
       \ }
 
 function! s:source.action_table['*'].browser.func(candidate)
@@ -181,6 +183,7 @@ endfunction
 "
 let s:source.action_table['*'].link = {
       \ 'description' : 'open links with browser',
+      \ 'is_quit'     : 0,
       \ }
 
 function! s:source.action_table['*'].link.func(candidate)
@@ -210,13 +213,16 @@ function! s:source.gather_candidates(args, context)
   let method = substitute(self.name , "twitter/" , "" , "")
   let method = get(s:api_alias , method , method)
 
+  let args = a:args
   try
     if method == 'show'
-      let result = s:gather_candidates_show(a:args, a:context)
+      let result = s:gather_candidates_show(args, a:context)
     elseif method == 'friends'
-      return s:gather_candidates_friends(a:args, a:context)
+      return s:gather_candidates_friends(args, a:context)
     else
-      let args = a:args
+      if method == 'user_timeline' && len(args) == 0
+        call add(args , s:user_info.screen_name)
+      endif
       call add(args , {"count" : 50 , "per_page" : 50})
       let result = rubytter#request(method , args)
     endif
