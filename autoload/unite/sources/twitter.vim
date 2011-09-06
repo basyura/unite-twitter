@@ -80,6 +80,7 @@ function! s:source.action_table['*'].preview.func(candidate)
     setlocal nomodified
     setlocal nomodifiable
     call cursor(1,1)
+    redraw
     execute 'wincmd p'
 endfunction
 
