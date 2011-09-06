@@ -40,6 +40,7 @@ function! s:TweetManager.get(id)
   endif
   let tweet = rubytter#request("show" , a:id)
   let self[tweet.id] = tweet
+  let s:screen_name_cache[tweet.user.screen_name] = 1
   return tweet
 endfunction
 
@@ -257,19 +258,13 @@ function! s:source.gather_candidates(args, context)
     let result = tmp
   endif
 
-  let tweets = []
-  for t in result
-    call add(tweets , {
-        \ "word"   : s:ljust(t.user.screen_name , 15) . " : " . t.text,
+  return map (result , '{
+        \ "word"   : s:ljust(v:val.user.screen_name , 15) . " : " . v:val.text,
         \ "source" : "twitter",
-        \ "source__screen_name" : t.user.screen_name ,
-        \ "source__status_id"   : t.id   ,
-        \ "source__in_reply_to_status_id" : t.in_reply_to_status_id  ,
-          \ })
-    let s:screen_name_cache[t.user.screen_name] = 1
-  endfor
-
-  return tweets
+        \ "source__screen_name" : v:val.user.screen_name ,
+        \ "source__status_id"   : v:val.id   ,
+        \ "source__in_reply_to_status_id" : v:val.in_reply_to_status_id  ,
+        \ }')
 endfunction
 
 function! s:gather_candidates_show(args, context)
