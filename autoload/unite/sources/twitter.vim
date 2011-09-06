@@ -24,6 +24,33 @@ else
   endif
 endif
 
+let s:tweet_cache = {}
+
+let s:TweetManager = {}
+
+function! s:TweetManager.request(method, ...)
+  let cmd = 'let tweet = rubytter#request("' . a:method
+  for s in a:000
+    let cmd .= '","' . s . '"'
+  endfor
+  let cmd .= ')'
+  execute cmd
+
+  for t in tweet
+    let self[t.id] = t
+  endfor
+  return tweet
+endfunction
+
+function! s:TweetManager.get(id)
+  if has_key(self , a:id)
+    return self[a:id]
+  endif
+  let tweet = rubytter#request("show" , a:id)
+  let self[tweet.id] = tweet
+  return tweet
+endfunction
+
 let s:friends = []
 
 let s:source = {
@@ -82,7 +109,12 @@ function! s:reply_list(in_reply_to_status_id)
       return list
     endif
     try
-      let tweet = rubytter#request("show" , id)
+      if has_key(s:tweet_cache , id)
+        let tweet = s:tweet_cache[id]
+      else
+        let tweet = rubytter#request("show" , id)
+        let s:tweet_cache[id] = tweet
+      endif
     catch
       echo v:exception
       echo 'id = ' . id
@@ -223,8 +255,9 @@ function! s:source.gather_candidates(args, context)
       if method == 'user_timeline' && len(args) == 0
         call add(args , s:user_info.screen_name)
       endif
-      call add(args , {"count" : 50 , "per_page" : 50})
+      call add(args , {"count" : 100 , "per_page" : 100})
       let result = rubytter#request(method , args)
+      "let result = s:TweetManager.request(method , args)
     endif
   catch 
     return map(split(v:exception , "\n") , '{
@@ -248,6 +281,7 @@ function! s:source.gather_candidates(args, context)
         \ "source__in_reply_to_status_id" : t.in_reply_to_status_id  ,
           \ })
     let s:screen_name_cache[t.user.screen_name] = 1
+    let s:tweet_cache[t.id] = t
   endfor
 
   return tweets
