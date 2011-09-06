@@ -24,18 +24,10 @@ else
   endif
 endif
 
-let s:tweet_cache = {}
-
 let s:TweetManager = {}
 
-function! s:TweetManager.request(method, ...)
-  let cmd = 'let tweet = rubytter#request("' . a:method
-  for s in a:000
-    let cmd .= '","' . s . '"'
-  endfor
-  let cmd .= ')'
-  execute cmd
-
+function! s:TweetManager.request(...)
+  let tweet = call('rubytter#request' , a:000)
   for t in tweet
     let self[t.id] = t
   endfor
@@ -109,12 +101,7 @@ function! s:reply_list(in_reply_to_status_id)
       return list
     endif
     try
-      if has_key(s:tweet_cache , id)
-        let tweet = s:tweet_cache[id]
-      else
-        let tweet = rubytter#request("show" , id)
-        let s:tweet_cache[id] = tweet
-      endif
+      let tweet = s:TweetManager.get(id)
     catch
       echo v:exception
       echo 'id = ' . id
@@ -256,8 +243,7 @@ function! s:source.gather_candidates(args, context)
         call add(args , s:user_info.screen_name)
       endif
       call add(args , {"count" : 100 , "per_page" : 100})
-      let result = rubytter#request(method , args)
-      "let result = s:TweetManager.request(method , args)
+      let result = s:TweetManager.request(method , args)
     endif
   catch 
     return map(split(v:exception , "\n") , '{
@@ -281,7 +267,6 @@ function! s:source.gather_candidates(args, context)
         \ "source__in_reply_to_status_id" : t.in_reply_to_status_id  ,
           \ })
     let s:screen_name_cache[t.user.screen_name] = 1
-    let s:tweet_cache[t.id] = t
   endfor
 
   return tweets
@@ -294,7 +279,7 @@ function! s:gather_candidates_show(args, context)
     if id == ""
       return list
     endif
-    let tweet = rubytter#request("show" , id)
+    let tweet = s:TweetManager.get("show" , id)
     call add(list , tweet)
     let id = tweet.in_reply_to_status_id
   endwhile
@@ -314,7 +299,7 @@ function! s:gather_candidates_friends(args, context)
   let next_cursor = "-1"
   while 1
     " how to get my screen name ?
-    let tmp = rubytter#request("friends" , s:user_info.screen_name , {"cursor" : next_cursor})
+    let tmp = s:TweetManager.request("friends" , s:user_info.screen_name , {"cursor" : next_cursor})
     call extend(friends , tmp.users)
     let next_cursor = tmp.next_cursor
     if next_cursor == "0"
