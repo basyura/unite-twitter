@@ -259,13 +259,23 @@ function! s:source.gather_candidates(args, context)
     let result = tmp
   endif
 
-  return map (result , '{
-        \ "word"   : s:ljust(v:val.user.screen_name , 15) . " : " . v:val.text,
+  let tweets = []
+  
+  for t in result
+    let word = s:ljust(t.user.screen_name , 15) . " : "
+    if t.favorited == 'true' | let word .= '★ ' | endif
+    let word .= t.text
+
+    call add(tweets , {
+        \ "word"   : word ,
         \ "source" : "twitter",
-        \ "source__screen_name" : v:val.user.screen_name ,
-        \ "source__status_id"   : v:val.id   ,
-        \ "source__in_reply_to_status_id" : v:val.in_reply_to_status_id  ,
-        \ }')
+        \ "source__screen_name" : t.user.screen_name ,
+        \ "source__status_id"   : t.id   ,
+        \ "source__in_reply_to_status_id" : t.in_reply_to_status_id  ,
+        \})
+  endfor
+
+  return tweets
 endfunction
 
 function! s:gather_candidates_show(args, context)
