@@ -234,19 +234,14 @@ function! s:source.gather_candidates(args, context)
   let method = substitute(self.name , "twitter/" , "" , "")
   let method = get(s:api_alias , method , method)
 
-  let args = a:args
   try
-    if method == 'show'
-      let result = s:gather_candidates_show(args, a:context)
-    elseif method == 'friends'
-      return s:gather_candidates_friends(args, a:context)
-    else
-      if method == 'user_timeline' && len(args) == 0
-        call add(args , s:user_info.screen_name)
-      endif
-      call add(args , {"count" : 100 , "per_page" : 100})
-      let result = s:TweetManager.request(method , args)
-    endif
+    let Fn = function('s:gather_candidates_' . method)
+  catch
+    let Fn = function('s:gather_candidates')
+  endtry
+
+  try
+    let result = Fn(method, a:args, a:context)
   catch 
     return map(split(v:exception , "\n") , '{
           \ "word"   : v:val ,
@@ -278,7 +273,21 @@ function! s:source.gather_candidates(args, context)
   return tweets
 endfunction
 
-function! s:gather_candidates_show(args, context)
+function! s:gather_candidates(method, args, context)
+  let args = a:args
+  call add(args , {"count" : 100 , "per_page" : 100})
+  return s:TweetManager.request(a:method , args)
+endfunction
+
+function! s:gather_candidates_user_timeline(method, args, context)
+  let args = a:args
+  if len(args) == 0
+    call add(args , s:user_info.screen_name)
+  endif
+  return s:gather_candidates(a:method, args, a:context)
+endfunction
+
+function! s:gather_candidates_show(method, args, context)
   let id = a:args[0]
   let list = []
   while 1
@@ -291,7 +300,7 @@ function! s:gather_candidates_show(args, context)
   endwhile
 endfunction
 
-function! s:gather_candidates_friends(args, context)
+function! s:gather_candidates_friends(method, args, context)
 
   if !unite#util#input_yesno("it takes long time")
     return []
