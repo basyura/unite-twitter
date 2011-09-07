@@ -36,7 +36,8 @@ function! s:post()
   endif
   redraw | echo 'sending ... ' | sleep 1
   try
-    call rubytter#request('update' , text)
+    let param = exists("b:post_param") ? b:post_param : {}
+    call rubytter#request('update' , text , param)
   catch
     echoerr v:exception
     return
