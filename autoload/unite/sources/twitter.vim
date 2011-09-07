@@ -260,9 +260,14 @@ function! s:source.gather_candidates(args, context)
     let word = s:ljust(t.user.screen_name , 15) . " : "
     if t.favorited == 'true' | let word .= '★ ' | endif
     let word .= t.text
+    let abbr = substitute(unite#util#truncate(word , winwidth(0) - 6) , '\s*$' , '' , '') 
+    if word != abbr
+      let abbr .= '..'
+    endif
 
     call add(tweets , {
         \ "word"   : word ,
+        \ "abbr"   : abbr ,
         \ "source" : "twitter",
         \ "source__screen_name" : t.user.screen_name ,
         \ "source__status_id"   : t.id   ,
