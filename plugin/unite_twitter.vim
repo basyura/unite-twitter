@@ -84,8 +84,11 @@ function! s:show_history()
 endfunction
 
 function! s:save_history_at_leave()
+  if &modifiable != 1
+    return
+  endif
   let msg = join(getline(1, "$"))
-  if msg !~ '^\s\?$'
+  if msg !~ '^\s\?$' && (len(s:history) == 0 || s:history[-1] != msg)
     call add(s:history , msg)
   endif
 endfunction
