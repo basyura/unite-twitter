@@ -86,7 +86,7 @@ function! s:source.gather_candidates(args, context)
   
   for t in result
     let word = s:ljust(t.user.screen_name , 15) . " : "
-    if t.favorited == 'true' | let word .= '★ ' | endif
+    if get(t , "favorited" , "") == 'true' | let word .= '★ ' | endif
     let word .= t.text
     let abbr = substitute(unite#util#truncate(word , winwidth(0) - 9) , '\s*$' , '' , '') 
     if word != abbr
@@ -108,7 +108,7 @@ endfunction
 
 function! s:gather_candidates(method, args, context)
   let args = a:args
-  call add(args , {"count" : 100 , "per_page" : 100})
+  call add(args , {"count" : 100 , "per_page" : 100 , "rpp" : 100})
   return s:TweetManager.request(a:method , args)
 endfunction
 
@@ -170,6 +170,10 @@ function! s:gather_candidates_friends(method, args, context)
   return candidates
 endfunction
 
+function! s:gather_candidates_search(method, args, context)
+  let word = len(a:args) == 0 ? input("search word : ") : join(a:args , " ")
+  return s:gather_candidates(a:method, [word], a:context)
+endfunction
 
 let s:source.action_table['*'].preview = {
       \ 'description' : 'preview this tweet',
@@ -350,6 +354,7 @@ function! unite#sources#twitter#define()
         \ {'name': 'user'     },
         \ {'name': 'show'     },
         \ {'name': 'friends'  },
+        \ {'name': 'search'   },
         \ ],
         \ 'extend(copy(s:source),
         \  extend(v:val, {"name": "twitter/" . v:val.name,
