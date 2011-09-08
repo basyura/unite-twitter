@@ -53,6 +53,124 @@ let s:source = {
       \ 'default_action' : 'preview' ,
       \ }
 
+function! s:source.gather_candidates(args, context)
+
+  if !exists("s:user_info")
+    let s:user_info = rubytter#request("verify_credentials")
+  endif
+
+  let method = substitute(self.name , "twitter/" , "" , "")
+  let method = get(s:api_alias , method , method)
+
+  try
+    let Fn = function('s:gather_candidates_' . method)
+  catch
+    let Fn = function('s:gather_candidates')
+  endtry
+
+  try
+    let result = Fn(method, a:args, a:context)
+  catch 
+    return map(split(v:exception , "\n") , '{
+          \ "word"   : v:val ,
+          \ "source" : "common" ,
+          \ }')
+  endtry
+
+  if type(result) == 4
+    let tmp = [result] | unlet result
+    let result = tmp
+  endif
+
+  let tweets = []
+  
+  for t in result
+    let word = s:ljust(t.user.screen_name , 15) . " : "
+    if t.favorited == 'true' | let word .= '★ ' | endif
+    let word .= t.text
+    let abbr = substitute(unite#util#truncate(word , winwidth(0) - 9) , '\s*$' , '' , '') 
+    if word != abbr
+      let abbr .= '..'
+    endif
+
+    call add(tweets , {
+        \ "word"   : word ,
+        \ "abbr"   : abbr ,
+        \ "source" : "twitter",
+        \ "source__screen_name" : t.user.screen_name ,
+        \ "source__status_id"   : t.id   ,
+        \ "source__in_reply_to_status_id" : t.in_reply_to_status_id  ,
+        \})
+  endfor
+
+  return tweets
+endfunction
+
+function! s:gather_candidates(method, args, context)
+  let args = a:args
+  call add(args , {"count" : 100 , "per_page" : 100})
+  return s:TweetManager.request(a:method , args)
+endfunction
+
+function! s:gather_candidates_user_timeline(method, args, context)
+  let args = a:args
+  if len(args) == 0
+    call add(args , s:user_info.screen_name)
+  endif
+  return s:gather_candidates(a:method, args, a:context)
+endfunction
+
+function! s:gather_candidates_show(method, args, context)
+  let id = a:args[0]
+  let list = []
+  while 1
+    if id == ""
+      return list
+    endif
+    let tweet = s:TweetManager.get("show" , id)
+    call add(list , tweet)
+    let id = tweet.in_reply_to_status_id
+  endwhile
+endfunction
+
+function! s:gather_candidates_friends(method, args, context)
+
+  if !unite#util#input_yesno("it takes long time")
+    return []
+  endif
+
+  if len(s:friends) != 0
+    return s:friends
+  endif
+
+  let friends = []
+  let next_cursor = "-1"
+  while 1
+    " how to get my screen name ?
+    let tmp = s:TweetManager.request("friends" , s:user_info.screen_name , {"cursor" : next_cursor})
+    call extend(friends , tmp.users)
+    let next_cursor = tmp.next_cursor
+    if next_cursor == "0"
+      break
+    endif
+  endwhile
+
+  let candidates = []
+  for v in friends
+    let tweets =  {
+          \ "word"   : s:ljust(v.screen_name , 15) . " : " . v.description ,
+          \ "source" : "twitter",
+          \ "source__screen_name" : v.screen_name ,
+          \ "source__status_id"   : "" ,
+          \ "source__in_reply_to_status_id" : ""  ,
+          \ }
+      call add(candidates , tweets)
+  endfor
+  let s:friends = candidates
+  return candidates
+endfunction
+
+
 let s:source.action_table['*'].preview = {
       \ 'description' : 'preview this tweet',
       \ 'is_quit'     : 0,
@@ -62,7 +180,7 @@ function! s:source.action_table['*'].preview.func(candidate)
 
     let bufnr = bufwinnr(s:buf_name)
     if bufnr > 0
-      exec bufnr.'wincmd w'
+      execute bufnr.'wincmd w'
     else
       execute 'below split ' . s:buf_name
     end
@@ -90,7 +208,7 @@ augroup UniteTwitterPreview
 augroup END
 
 function! s:unite_twitter_preview_settings()
-  setlocal bufhidden=delete 
+  setlocal bufhidden=wipe
   setlocal nobuflisted
   setlocal noswapfile
 endfunction
@@ -223,123 +341,6 @@ function! s:source.hooks.on_close(args, context)
   let no = bufnr(s:buf_name)
   try | execute "bd! " . no | catch | endtry
   call writefile(keys(s:screen_name_cache) , s:screen_name_cache_path)
-endfunction
-
-function! s:source.gather_candidates(args, context)
-
-  if !exists("s:user_info")
-    let s:user_info = rubytter#request("verify_credentials")
-  endif
-
-  let method = substitute(self.name , "twitter/" , "" , "")
-  let method = get(s:api_alias , method , method)
-
-  try
-    let Fn = function('s:gather_candidates_' . method)
-  catch
-    let Fn = function('s:gather_candidates')
-  endtry
-
-  try
-    let result = Fn(method, a:args, a:context)
-  catch 
-    return map(split(v:exception , "\n") , '{
-          \ "word"   : v:val ,
-          \ "source" : "common" ,
-          \ }')
-  endtry
-
-  if type(result) == 4
-    let tmp = [result] | unlet result
-    let result = tmp
-  endif
-
-  let tweets = []
-  
-  for t in result
-    let word = s:ljust(t.user.screen_name , 15) . " : "
-    if t.favorited == 'true' | let word .= '★ ' | endif
-    let word .= t.text
-    let abbr = substitute(unite#util#truncate(word , winwidth(0) - 9) , '\s*$' , '' , '') 
-    if word != abbr
-      let abbr .= '..'
-    endif
-
-    call add(tweets , {
-        \ "word"   : word ,
-        \ "abbr"   : abbr ,
-        \ "source" : "twitter",
-        \ "source__screen_name" : t.user.screen_name ,
-        \ "source__status_id"   : t.id   ,
-        \ "source__in_reply_to_status_id" : t.in_reply_to_status_id  ,
-        \})
-  endfor
-
-  return tweets
-endfunction
-
-function! s:gather_candidates(method, args, context)
-  let args = a:args
-  call add(args , {"count" : 100 , "per_page" : 100})
-  return s:TweetManager.request(a:method , args)
-endfunction
-
-function! s:gather_candidates_user_timeline(method, args, context)
-  let args = a:args
-  if len(args) == 0
-    call add(args , s:user_info.screen_name)
-  endif
-  return s:gather_candidates(a:method, args, a:context)
-endfunction
-
-function! s:gather_candidates_show(method, args, context)
-  let id = a:args[0]
-  let list = []
-  while 1
-    if id == ""
-      return list
-    endif
-    let tweet = s:TweetManager.get("show" , id)
-    call add(list , tweet)
-    let id = tweet.in_reply_to_status_id
-  endwhile
-endfunction
-
-function! s:gather_candidates_friends(method, args, context)
-
-  if !unite#util#input_yesno("it takes long time")
-    return []
-  endif
-
-  if len(s:friends) != 0
-    return s:friends
-  endif
-
-  let friends = []
-  let next_cursor = "-1"
-  while 1
-    " how to get my screen name ?
-    let tmp = s:TweetManager.request("friends" , s:user_info.screen_name , {"cursor" : next_cursor})
-    call extend(friends , tmp.users)
-    let next_cursor = tmp.next_cursor
-    if next_cursor == "0"
-      break
-    endif
-  endwhile
-
-  let candidates = []
-  for v in friends
-    let tweets =  {
-          \ "word"   : s:ljust(v.screen_name , 15) . " : " . v.description ,
-          \ "source" : "twitter",
-          \ "source__screen_name" : v.screen_name ,
-          \ "source__status_id"   : "" ,
-          \ "source__in_reply_to_status_id" : ""  ,
-          \ }
-      call add(candidates , tweets)
-  endfor
-  let s:friends = candidates
-  return candidates
 endfunction
 
 function! unite#sources#twitter#define()
