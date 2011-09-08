@@ -47,7 +47,7 @@ function! s:post()
 endfunction
 
 function! s:unite_twitter_settings()
-  setlocal bufhidden=delete 
+  setlocal bufhidden=wipe
   setlocal nobuflisted
   setlocal noswapfile
   setlocal modifiable
