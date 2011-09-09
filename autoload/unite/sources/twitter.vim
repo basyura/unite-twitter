@@ -175,6 +175,15 @@ function! s:gather_candidates_search(method, args, context)
   return s:gather_candidates(a:method, [word], a:context)
 endfunction
 
+function! s:gather_candidates_favorites(method, args, context)
+  let args = a:args
+  if len(args) == 0
+    call add(args , s:user_info.screen_name)
+  endif
+  return s:gather_candidates(a:method, args, a:context)
+endfunction
+
+
 let s:source.action_table['*'].preview = {
       \ 'description' : 'preview this tweet',
       \ 'is_quit'     : 0,
@@ -355,6 +364,7 @@ function! unite#sources#twitter#define()
         \ {'name': 'show'     },
         \ {'name': 'friends'  },
         \ {'name': 'search'   },
+        \ {'name': 'favorites'},
         \ ],
         \ 'extend(copy(s:source),
         \  extend(v:val, {"name": "twitter/" . v:val.name,
