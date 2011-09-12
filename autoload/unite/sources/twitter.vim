@@ -127,7 +127,7 @@ function! s:gather_candidates_show(method, args, context)
     if id == ""
       return list
     endif
-    let tweet = s:TweetManager.get("show" , id)
+    let tweet = s:TweetManager.get(id)
     call add(list , tweet)
     let id = tweet.in_reply_to_status_id
   endwhile
