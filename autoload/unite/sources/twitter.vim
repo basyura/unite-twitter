@@ -183,6 +183,13 @@ function! s:gather_candidates_favorites(method, args, context)
   return s:gather_candidates(a:method, args, a:context)
 endfunction
 
+function! s:gather_candidates_list_statuses(method, args, context)
+  let args = a:args
+  if len(args) == 1
+    let args = [s:user_info.screen_name , args[0]]
+  endif
+  return s:gather_candidates(a:method, args, a:context)
+endfunction
 
 let s:source.action_table['*'].preview = {
       \ 'description' : 'preview this tweet',
