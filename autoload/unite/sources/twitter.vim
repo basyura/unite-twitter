@@ -2,6 +2,10 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
+call unite#util#set_default('g:unite_twitter_cache_limit', 100)
+call unite#util#set_default('g:unite_twitter_per_page'   , 100)
+
+
 let s:buf_name = 'unite_twitter'
 
 let s:cache_directory = g:unite_data_directory . '/twitter'
@@ -34,7 +38,7 @@ function! s:TweetManager.request(...)
 
   let cache = get(self, a:1, [])
   call extend(cache, tweet, 0)
-  let self[a:1] = cache[0:100]
+  let self[a:1] = cache[0:g:unite_twitter_cache_limit]
 
   return copy(cache)
 endfunction
@@ -114,7 +118,11 @@ endfunction
 let s:last_ids = {}
 
 function! s:gather_candidates(method, args, context)
-  let param = {"count" : 100 , "per_page" : 100 , "rpp" : 100 }
+  let param = {
+        \ "count"    : g:unite_twitter_per_page , 
+        \ "per_page" : g:unite_twitter_per_page , 
+        \ "rpp"      : g:unite_twitter_per_page 
+        \ }
 
   let last_id = get(s:last_ids, a:method, "")
   if last_id != ""
