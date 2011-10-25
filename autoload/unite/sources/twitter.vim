@@ -31,7 +31,12 @@ function! s:TweetManager.request(...)
   for t in tweet
     let self[t.id] = t
   endfor
-  return tweet
+
+  let cache = get(self, a:1, [])
+  call extend(cache, tweet, 0)
+  let self[a:1] = cache[0:100]
+
+  return copy(cache)
 endfunction
 
 function! s:TweetManager.get(id)
@@ -106,10 +111,25 @@ function! s:source.gather_candidates(args, context)
   return tweets
 endfunction
 
+let s:last_ids = {}
+
 function! s:gather_candidates(method, args, context)
+  let param = {"count" : 100 , "per_page" : 100 , "rpp" : 100 }
+
+  let last_id = get(s:last_ids, a:method, "")
+  if last_id != ""
+    let param.since_id = last_id
+  endif
+
   let args = a:args
-  call add(args , {"count" : 100 , "per_page" : 100 , "rpp" : 100})
-  return s:TweetManager.request(a:method , args)
+  call add(args , param)
+
+  let tweets = s:TweetManager.request(a:method , args)
+  if len(tweets) != 0
+    let s:last_ids[a:method] = tweets[0].id
+  end
+
+  return tweets
 endfunction
 
 function! s:gather_candidates_user_timeline(method, args, context)
