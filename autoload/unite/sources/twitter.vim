@@ -4,6 +4,7 @@ set cpo&vim
 
 call unite#util#set_default('g:unite_twitter_cache_limit', 100)
 call unite#util#set_default('g:unite_twitter_per_page'   , 100)
+call unite#util#set_default('g:unite_twitter_debug'      , 0)
 
 
 let s:buf_name = 'unite_twitter'
@@ -30,26 +31,40 @@ endif
 
 let s:TweetManager = {}
 
-function! s:TweetManager.request(...)
-  let param = a:000[-1][-1]
-  let last_id = get(self, "last_id_" . a:1, "")
-  if last_id != ""
-    let param["since_id"] = last_id
+function! s:TweetManager.request(method, args, param)
+
+  if type(a:args) == 3
+    let last_key  = 'last_id_' . a:method . ':' . join(a:args, ':')
+    let cache_key = 'cache_'   . a:method . ':' . join(a:args, ':')
+  else
+    let last_key  = 'last_id_' . a:method . ':' . a:args
+    let cache_key = 'cache_'   . a:method . ':' . a:args
+  end
+
+  let param = a:param
+  if has_key(self, last_key)
+    let param["since_id"] = self[last_key]
   endif
 
-  let tweets = call('rubytter#request' , a:000)
+  let start = reltime()
+
+  let tweets = call('rubytter#request' , [a:method, add(a:args, param)])
+
+  if s:is_debug()
+    call unite#print_message('rubytter#request - ' . reltimestr(reltime(start)))
+  end
 
   for t in tweets
     let self[t.id] = t
   endfor
 
   if len(tweets) != 0
-    let self["last_id_" . a:1] = tweets[0].id
+    let self[last_key] = tweets[0].id
   end
 
-  let cache = get(self, a:1, [])
+  let cache = get(self, cache_key, [])
   call extend(cache, tweets, 0)
-  let self[a:1] = cache[0:g:unite_twitter_cache_limit]
+  let self[cache_key] = cache[0:g:unite_twitter_cache_limit]
 
   return copy(cache)
 endfunction
@@ -134,7 +149,7 @@ function! s:gather_candidates(method, args, context)
         \ "rpp"      : g:unite_twitter_per_page 
         \ }
 
-  return s:TweetManager.request(a:method , add(a:args , param))
+  return s:TweetManager.request(a:method, a:args, param)
 endfunction
 
 function! s:gather_candidates_user_timeline(method, args, context)
@@ -430,6 +445,10 @@ function! s:ljust(str, size, ...)
     let str .= c
   endwhile
   return str
+endfunction
+
+function! s:is_debug()
+  return g:unite_twitter_debug
 endfunction
 
 
