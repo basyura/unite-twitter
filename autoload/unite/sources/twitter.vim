@@ -51,7 +51,7 @@ function! s:TweetManager.request(method, args, param)
   let tweets = call('rubytter#request' , [a:method, add(a:args, param)])
 
   if s:is_debug()
-    call unite#print_message('rubytter#request - ' . reltimestr(reltime(start)))
+    call unite#print_message('[twitter] rubytter#request - ' . reltimestr(reltime(start)))
   end
 
   for t in tweets
@@ -89,6 +89,7 @@ let s:source = {
       \ }
 
 function! s:source.gather_candidates(args, context)
+  let start = reltime()
 
   if !exists("s:user_info")
     let s:user_info = rubytter#request("verify_credentials")
@@ -137,6 +138,10 @@ function! s:source.gather_candidates(args, context)
         \ "source__in_reply_to_status_id" : t.in_reply_to_status_id  ,
         \})
   endfor
+
+  if s:is_debug()
+    call unite#print_message('[twitter] total - ' . reltimestr(reltime(start)))
+  end
 
   return tweets
 endfunction
