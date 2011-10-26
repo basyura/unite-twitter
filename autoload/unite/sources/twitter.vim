@@ -31,13 +31,24 @@ endif
 let s:TweetManager = {}
 
 function! s:TweetManager.request(...)
-  let tweet = call('rubytter#request' , a:000)
-  for t in tweet
+  let param = a:000[-1][-1]
+  let last_id = get(self, "last_id_" . a:1, "")
+  if last_id != ""
+    let param["since_id"] = last_id
+  endif
+
+  let tweets = call('rubytter#request' , a:000)
+
+  for t in tweets
     let self[t.id] = t
   endfor
 
+  if len(tweets) != 0
+    let self["last_id_" . a:1] = tweets[0].id
+  end
+
   let cache = get(self, a:1, [])
-  call extend(cache, tweet, 0)
+  call extend(cache, tweets, 0)
   let self[a:1] = cache[0:g:unite_twitter_cache_limit]
 
   return copy(cache)
@@ -115,7 +126,6 @@ function! s:source.gather_candidates(args, context)
   return tweets
 endfunction
 
-let s:last_ids = {}
 
 function! s:gather_candidates(method, args, context)
   let param = {
@@ -124,20 +134,7 @@ function! s:gather_candidates(method, args, context)
         \ "rpp"      : g:unite_twitter_per_page 
         \ }
 
-  let last_id = get(s:last_ids, a:method, "")
-  if last_id != ""
-    let param.since_id = last_id
-  endif
-
-  let args = a:args
-  call add(args , param)
-
-  let tweets = s:TweetManager.request(a:method , args)
-  if len(tweets) != 0
-    let s:last_ids[a:method] = tweets[0].id
-  end
-
-  return tweets
+  return s:TweetManager.request(a:method , add(a:args , param))
 endfunction
 
 function! s:gather_candidates_user_timeline(method, args, context)
