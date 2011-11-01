@@ -2,9 +2,10 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-call unite#util#set_default('g:unite_twitter_cache_limit', 100)
-call unite#util#set_default('g:unite_twitter_per_page'   , 100)
-call unite#util#set_default('g:unite_twitter_debug'      , 0)
+call unite#util#set_default('g:unite_twitter_cache_limit'  , 100)
+call unite#util#set_default('g:unite_twitter_per_page'     , 100)
+call unite#util#set_default('g:unite_twitter_debug'        , 0)
+call unite#util#set_default('g:unite_twitter_use_since_id' , 1)
 
 
 let s:buf_name = 'unite_twitter'
@@ -42,7 +43,7 @@ function! s:TweetManager.request(method, args, param)
   end
 
   let param = a:param
-  if has_key(self, last_key)
+  if g:unite_twitter_use_since_id && has_key(self, last_key)
     let param["since_id"] = self[last_key]
   endif
 
